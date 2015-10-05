@@ -215,9 +215,11 @@ class Blackjack
   def run
     deal_cards
     show_initial_cards
+
     player_total = player_turn
     puts ""
     dealer_total = dealer_turn
+    
     who_won(player_total, dealer_total)
   end
 
