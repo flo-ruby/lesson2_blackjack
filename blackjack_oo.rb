@@ -37,8 +37,6 @@
 #   - values taken from: Ace, 2, 3, 4, 5, 6, 7, 8, 9, 10, Jack, Queen, King
 #   - suits taken from: Clubs, Diamonds, Hearts, Spades
 # - the 52 cards deck is a combination of all possibilities of values and suits
-# Card examples: ["Ace", :spades], ["2", :diamonds]
-# Shoe: [["Ace", :spades], ["2", :diamonds],...]
 
 require "pry"
 
