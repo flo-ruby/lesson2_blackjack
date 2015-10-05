@@ -147,11 +147,11 @@ class Player
   def plays(deck)
     loop do
       player_points = self.total
-      if player_points > 21
-        puts "\nYou have #{player_points} points. That is more than 21! Dealer wins."
+      if player_points > Blackjack::BLACKJACK_AMOUNT
+        puts "\nYou have #{player_points} points. That is more than #{Blackjack::BLACKJACK_AMOUNT}! Dealer wins."
         exit
-      elsif player_points == 21
-        puts "\nWow, you got 21! You made the blackjack and you win!"
+      elsif player_points == Blackjack::BLACKJACK_AMOUNT
+        puts "\nWow, you got #{Blackjack::BLACKJACK_AMOUNT}! You made the blackjack and you win!"
         exit
       end
       puts "Hit or Stay? (h/s)"
@@ -182,14 +182,14 @@ class Dealer
     loop do
       sleep(2)
       dealer_points = self.total
-      if dealer_points > 21
-        puts "\nDealer has #{dealer_points} which is more than 21. You win!"
+      if dealer_points > Blackjack::BLACKJACK_AMOUNT
+        puts "\nDealer has #{dealer_points} which is more than #{Blackjack::BLACKJACK_AMOUNT}. You win!"
         exit
-      elsif dealer_points == 21
-        puts "\nDealer has 21. Dealer wins."
+      elsif dealer_points == Blackjack::BLACKJACK_AMOUNT
+        puts "\nDealer has #{Blackjack::BLACKJACK_AMOUNT}. Dealer wins."
         exit
       end
-      if dealer_points < 17
+      if dealer_points < Blackjack::DEALER_HIT_MIN
         self.hits(deck)
       else
         self.stays
@@ -205,6 +205,8 @@ end
 
 class Blackjack
   attr_reader :player, :dealer, :deck
+  BLACKJACK_AMOUNT = 21
+  DEALER_HIT_MIN = 17
 
   def initialize
     @player = Player.new
@@ -219,7 +221,7 @@ class Blackjack
     player_total = player_turn
     puts ""
     dealer_total = dealer_turn
-    
+
     who_won(player_total, dealer_total)
   end
 
