@@ -40,6 +40,8 @@
 # Card examples: ["Ace", :spades], ["2", :diamonds]
 # Shoe: [["Ace", :spades], ["2", :diamonds],...]
 
+require "pry"
+
 class Card
   attr_accessor :face_value, :suit
   CARD_VALUES = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"]
@@ -51,7 +53,7 @@ class Card
   end
 
   def points
-    case @value
+    case @face_value
     when "Ace"
       return 11
     when "Jack"
@@ -61,12 +63,12 @@ class Card
     when "King"
       return 10
     else
-      return @value.to_i
+      return @face_value.to_i
     end
   end
 
   def to_s
-    "This is the #{face_value} of #{suit}"
+    "#{face_value} of #{suit}"
   end
 end
 
@@ -75,9 +77,9 @@ class Deck
 
   def initialize(num_decks)
     @cards = []
-    Card::CARD_SUITS.each do |suit|
-      Cards::CARD_VALUES.each do |value|
-        @cards << Card.new(suit, value)
+    Card::CARD_VALUES.each do |face_value|
+      Card::CARD_SUITS.each do |suit|
+        @cards << Card.new(face_value, suit)
       end
     end
     @cards = @cards * num_decks
@@ -85,43 +87,176 @@ class Deck
   end
 
   def scramble!
-    cards.shuffle
+    cards.shuffle!
   end
 
-  def deal
+  def deal_one
     cards.pop
   end
-
 end
 
-class Hand
+module Hand
+  def pretty_hand
+    cards.map do |card|
+      "#{card}"
+    end.join(", ")
+  end
+
+  def number_of_aces
+    cards.select do |card|
+      card.face_value == "Ace"
+    end.count
+  end
+
+  def total
+    card_values = cards.map do |card|
+      card.points
+    end
+    v = card_values.reduce(:+)
+    n = number_of_aces
+    while (v > 21) && (n > 0)
+      v = v - 10
+      n = n - 1
+    end
+    return v
+  end
+
+  def deals(deck)
+    @cards << deck.deal_one
+  end
+
+  def hits(deck)
+    puts "Hitting..."
+    @cards << deck.deal_one
+    show_cards
+  end
+
+  def stays
+    puts "Staying..."
+  end
 end
 
-class PlayerHand < Hand
+class Player
+  include Hand
+  attr_reader :cards
 
+  def initialize
+    @cards = []
+  end
+
+  def plays(deck)
+    loop do
+      player_points = self.total
+      if player_points > 21
+        puts "\nYou have #{player_points} points. That is more than 21! Dealer wins."
+        exit
+      elsif player_points == 21
+        puts "\nWow, you got 21! You made the blackjack and you win!"
+        exit
+      end
+      puts "Hit or Stay? (h/s)"
+      answer = gets.chomp.downcase
+      if answer == "h"
+        self.hits(deck)
+      else
+        self.stays
+        break
+      end
+    end
+  end
+
+  def show_cards
+    puts "Your cards: #{pretty_hand}"
+  end
 end
 
-class DealerHand < Hand
+class Dealer
+  include Hand
+  attr_reader :cards
 
+  def initialize
+    @cards = []
+  end
+
+  def plays(deck)
+    loop do
+      sleep(2)
+      dealer_points = self.total
+      if dealer_points > 21
+        puts "\nDealer has #{dealer_points} which is more than 21. You win!"
+        exit
+      elsif dealer_points == 21
+        puts "\nDealer has 21. Dealer wins."
+        exit
+      end
+      if dealer_points < 17
+        self.hits(deck)
+      else
+        self.stays
+        break
+      end
+    end
+  end
+
+  def show_cards
+    puts "Dealer cards: #{pretty_hand}"
+  end
 end
 
 class Blackjack
+  attr_reader :player, :dealer, :deck
+
   def initialize
     @player = Player.new
     @dealer = Dealer.new
-    @deck = Deck.new(2)
+    @deck = Deck.new(1)
   end
 
   def run
     deal_cards
-    show_flow
-    player_turn
-    dealer_turn
-    who_won?
+    show_initial_cards
+    player_total = player_turn
+    puts ""
+    dealer_total = dealer_turn
+    who_won(player_total, dealer_total)
+  end
+
+  def deal_cards
+    player.deals(deck)
+    dealer.deals(deck)
+    player.deals(deck)
+    dealer.deals(deck)
+  end
+
+  def show_initial_cards
+    puts "Dealer visible card is: #{dealer.cards[1]}"
+    player.show_cards
+  end
+
+  def player_turn
+    player.plays(deck)
+    player_total = player.total
+    puts "Your points: #{player_total}."
+    return player_total
+  end
+
+  def dealer_turn
+    dealer.show_cards
+    dealer.plays(deck)
+    dealer_total = dealer.total
+    puts "Dealer points: #{dealer_total}."
+    return dealer_total
+  end
+
+  def who_won(player_total, dealer_total)
+    if player_total > dealer_total
+      puts "\nYou have more points than the dealer. You win!"
+    elsif player_total < dealer_total
+      puts "\nDealer has more points. Dealer wins."
+    else
+      puts "\nIt's a tie."
+    end
   end
 end
 
-
-# game = Blackjack.new.run
-c = Card.new("Ace", :clubs)
-puts c
+game = Blackjack.new.run
